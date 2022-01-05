@@ -1,0 +1,203 @@
+---
+title: "Basic K-means clustering in R"
+author: " Dr Patrycja Delong-Smith"
+date: "6 January 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+```{r include=FALSE}
+install.packages(c("factoextra","NbClust"))
+library(factoextra)
+library(NbClust)
+```
+
+# K-means clustering
+
+This tutorial explains how to perform basic k-means clustering in R.
+
+Clustering is a data science technique, which can be used to divide data into 
+groups based on their similarity. K-means is one of the most popular unsupervised
+machine learning algorithms.
+
+Let's start with a simple example to try to understand how the algorithm works. 
+We would like to identify 2 groups within 2-dimensional data sample.
+
+## K-means algorithm
+1. At first the alogorithm assigns data point to k-clusters (2 in our example)
+and compute inital centroids as mean for observations in each cluster.
+2. Then it computes the distances between the centroids and every data point, which
+is assigned to the closest cluster.
+3. Means (centroid locations) of the clusters are updated using data points 
+assigned to them.
+4. Steps 2 and 3 are repeated until centroids no longer change.
+
+
+## Advantages and disadvantages fo k-means
+
+### Advantages:
+* fast and scales well to large datasets
+* simple to implement
+* doesn't require labels
+
+### Diasdvantages:
+* depends on the inital random cluster assignment
+* requires user to specify the number of clusters
+* only works well with clusters of similar sizes, but it can be adapted to account for this
+
+# K-means in R
+
+Load iris dataset containing and check its' format.
+```{r}
+data("iris")
+str(iris)
+```
+
+For simplicity we'll use just 2 variables. We should also normalize the dataset
+- we can do this using scale funtion. Then we can have a quick look at the data
+using plot funtion. 
+```{r}
+# select first 2 columns
+df = scale(iris[1:2])
+plot(df)
+```
+
+We set numbers of clusters to 3 and nstart parameter to 5. Nstart defines the 
+number of the random sets to initialise the algorithm. Default nstart is equal 
+to 1, which can lead to unstable results.
+
+Str function checks the structure of the output.
+
+```{r}
+k3 = kmeans(df, 3, nstart = 5)
+str(k3)
+```
+
+As you can see it is a list with 9 elements, which we can use to access more 
+information about the analysis results. Cluster element contains individual cluster
+assignment for each observation in the original dataset. Centers element contains 
+variable means of each cluster and size element numbers of observations were 
+assigned to them.
+
+Let's try out the size argument:
+
+```{r}
+k3$size
+```
+
+## Task - perform analysis using 2 clusters and check the size of the clusters
+Use 2 clusters and 5 starting positions.
+```{r}
+k2 = kmeans(df, , nstart = )
+k2$
+```
+
+
+# Cluster visualisation
+
+To see which observations have been assigned to which cluster we can plot them 
+in different colours. To do that we assign colours to each point using 'cluster' 
+vector, which is transformed into factor format using factor function.
+```{r}
+plot(df, col = factor(k3$cluster))
+```
+
+## Task - plot the results for 2 clusters
+Use 4 clusters and 5 starting positions.
+```{r}
+plot(df, col = )
+```
+
+## Visualisation using factoextra package
+
+factoextra package contains a few useful functions for cluster analysis. One of 
+them is fviz_cluster, which builds charts illustrating cluster membership of 
+observations. 
+The function requires specifying two arguments: kmeans output and original data frame.
+
+```{r}
+# plot clusters
+fviz_cluster(k3, data = df)
+```
+
+# How to decide how many clusters to use?
+
+Deciding how many clusters to use in k-means analysis can be a real challenge. 
+There are numerous different methods and they often result in different cluster 
+numbers - yikes! Let's have a look at some of these.
+
+## Elbow method
+
+To use elbow method we need to compute Within cluster Sum of Squares (WSS).
+WSS is sum of squared distances between each point in a cluster and the center of
+the cluster. 
+First we run analysis for different numbers of clusters and compute WSS 
+for each k value.
+
+```{r}
+# initialise wss vector
+wss = vector("numeric")
+# compute wss for cluster number k = 1 to 10
+for (k in 1:10) wss[k] = sum(kmeans(df, k, nstart = 5)$withinss)
+```
+
+Once we have the results we take a look at the plot of WSS against the number of
+clusters to find the "Elbow". WSS value will decrease with the number of clusters k. 
+Initally decrease in WSS will be large, but after k value reaches the elbow WSS 
+does not decrease much and the line will be almost flat.
+
+```{r}
+#plot WSS against number of clusters
+plot(1:10, wss, type="b", xlab="Number of Clusters",
+     ylab="Within groups sum of squares")
+```
+
+## Silhouette method
+
+Silhouette coefficient can take values from -1 to 1 and measures similarity within
+the cluster compared with other clusters. It is based on distance between an point
+and all the ohter points within the same/different clusters.
+ 
+```{r}
+fviz_nbclust(df, kmeans, method = "silhouette", k.max = 10, nstart = 5)
+```
+
+## Find optimal number of clusters using NbClust package
+
+The NbClust package can compute 30 indices for determining the optimal number 
+of clusters. If method 'all' is specified the function procudes all* indices and 
+outlines how many of them suggest using given number of clusters.
+
+We need to specify the dataset, minimum and maximum number of clusters we want to
+consider (2 to 10), clustering methods to use (kmeans) and indices to compute (all).
+
+```{r include = FALSE}
+res.nbclust = NbClust(df, min.nc = 2, max.nc = 10, method = "kmeans", index ="all")
+```
+
+We can use fvis_nbclust funtion fromm factoextra package to illustrate the result.
+
+```{r}
+fviz_nbclust(res.nbclust)
+```
+
+## Task - Identify the optimal number of clusters
+
+Try identify the best number of clusters for the iris dataset when using all 4 variables.
+```{r include = FALSE}
+# select columnns to use and normalize the data
+df4 = scale(iris[1:4])
+# find optimal number of clusters
+res.nbclust = 
+```
+
+```{r}
+# illustrate results
+fviz_nbclust(res.nbclust)
+```
+
+# Test your knowledge!
+###[Take a quiz](https://forms.gle/JfvdFmgKoPhR8exv5)
